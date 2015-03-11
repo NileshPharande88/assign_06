@@ -1,0 +1,19 @@
+{
+	"subjectId": 14,
+    "subjectName": "Advanced Graphics Part 2",
+    "enrolledStudents":
+    [
+        {
+            "id": 121,
+            "score": 348
+        },
+        {
+            "id": 123,
+            "score": 250
+        },
+        {
+            "id": 124,
+            "score": 302
+        }
+    ]
+}

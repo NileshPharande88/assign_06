@@ -1,0 +1,19 @@
+{
+	"subjectId": 15,
+    "subjectName": "IGI 1",
+    "enrolledStudents":
+    [
+        {
+            "id": 121,
+            "score": 349
+        },
+        {
+            "id": 122,
+            "score": 329
+        },
+        {
+            "id": 123,
+            "score": 204
+        }
+    ]
+}

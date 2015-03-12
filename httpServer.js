@@ -88,6 +88,45 @@ try {
     }//  readSourceFiles(parallel).
 
 
+    var isRecordPresent = function (students, newStudent) {
+        var isPresent = true;
+        for (x in students) {  //Saparately access every students.
+            if (students[x].email === newStudent.email) {
+                console.log("Error: Student with the same email is already present.");
+                break;
+            } else if (students[x].name === newStudent.name) {
+                console.log("Error: Student with the same name is already present.");
+                break;
+            } else {  //student is already not in record.
+                isPresent = false;
+            }
+        }
+        return isPresent;
+    }//  isRecordPresent().
+
+
+    var addNewRecordtoJsonobjects = function (newStudent, jsonObjects, callback) {
+        //Created new entry in students.json.
+        var students = jsonObjects[0].students;
+        var id = 1;
+        for (var x = 0; x < students.length; x++) {
+            if ( id === students[x].id ) {
+                id++;
+                x = -1;
+            }
+        }
+        students[students.length].id = id;
+        students[students.length].email = newStudent.email;
+        students[students.length].name = newStudent.name;
+        console.log("Length before adding new element: ", jsonObjects[0].students.length);
+        jsonObjects[0].students.push( students[students.length] );  //Created new entry in students.json.
+        console.log("Length after adding new element: ", jsonObjects[0].students.length);
+        ;
+        ;
+        return callback(null);
+    }
+
+
     var server = http.createServer ( function (req, res) {
         var folderName = req.url.split('/')[1];  //devided url on base of "/".
         folderName = folderName.toLowerCase();  //Converte folder name to lower case.
@@ -114,26 +153,18 @@ try {
                             } else {
 
                                 var students = jsonObjects[0].students;
-                                var isRecordPresent = true;
-                                for (x in students) {  //Saparately access every students.
-                                    if (students[x].email === newStudent.email) {
-                                        console.log("Error: Student with the same email is already present.");
-                                        res.end("Student with the same email is already present.");
-                                        break;
-                                    } else if (students[x].name === newStudent.name) {
-                                        console.log("Error: Student with the same name is already present.");
-                                        res.end("Student with the same name is already present.");
-                                        break;
-                                    } else {  //student is alrready not in record. So add a new record.
-                                        isRecordPresent = false;
-                                    }
-                                }
-                                if ( !isRecordPresent ) {
-                                    console.log("Student is not already in record");
-                                    ;
-                                    ;
-                                    res.end("PUT request.");
-                                } 
+                                if ( isRecordPresent(students, newStudent) ) {
+                                    res.end("Student is already present.");
+                                } else {  // Add a new student record in all source json files.
+                                	console.log("Student not already present.");
+                                	res.end("Student not already present.");
+            //                        addNewRecordtoJsonobjects(newStudent, jsonObjects, function (responseJSON) {
+            //                            console.log("responseJSON : ", JSON.stringify(responseJSON) );
+            //                            ;
+            //                            ;
+            //                            res.end("PUT request.");
+            //                        });//  addNewRecordtoJsonobjects().
+                                }//  isRecordPresent().
                             }
                         }
                     });//  readSourceFiles().

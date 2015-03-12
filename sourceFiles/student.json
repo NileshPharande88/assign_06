@@ -1,0 +1,16 @@
+{
+    "email": "john@example.com",
+    "name": "John Doe",
+    "enrolledSubjects": 
+    [
+        {
+            "subjectId": 123
+        },
+        {
+            "subjectId": 124
+        },
+        {
+            "subjectId": 125
+        }
+    ]
+}

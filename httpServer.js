@@ -173,7 +173,7 @@ try {
     }//  isRecordPresent().
 
 
-    var addNewRecordtoJsonobjects = function (newStudent, jsonObjects, callback) {
+    var addNewRecordtoJsonObjects = function (newStudent, jsonObjects, callback) {
         //Created new entry in students.json's object.
         var tempStudents = jsonObjects[0].students;
         var id = 1;
@@ -207,20 +207,15 @@ try {
                 console.log("Subject id given by student is not found: ", subject.subjectId);
             }
         });//added student's data in sub_x.json file's objects.
-        //
-        //
+
         //code to modify json files with modified json objects.
         writeSourceFiles(jsonObjects, function (err,response) {
             if (err) {
                 return callback(err, null);
             } else {
                 console.log("Modified files: ",response.length);
-                console.log("before: ",JSON.stringify(newStudent));
                 newStudent.id = id;
-                console.log("After: ",JSON.stringify(newStudent));
-                ;
-                ;
-                return callback(null, null);
+                return callback(null, newStudent);
             }
         });
     }
@@ -248,26 +243,22 @@ try {
                         } else {
                             if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
                                 console.log("Error: Student element is not found in student.json.");
-                                res.end("Student element is not found in student.json.");
+                                res.end("Error: Student element is not found in student.json.");
                             } else {
-
                                 var students = jsonObjects[0].students;
                                 isRecordPresent(students, newStudent, function (response) {
                                     if (response) {
-                                        res.end("Student is already present.");
+                                        res.end("Error: Student is already present.");
                                     } else {
-                                        addNewRecordtoJsonobjects(newStudent, jsonObjects, function (err, responseJSON) {
+                                        addNewRecordtoJsonObjects(newStudent, jsonObjects, function (err, responseJSON) {
                                             if (err) {
-                                                ;
+                                                console.log(err);
+                                                res.end("Error: Failed to create new record.");
                                             } else {
-                                                ;
+                                                console.log("responseJSON : ", JSON.stringify(responseJSON) );
+                                                res.end( JSON.stringify(responseJSON) );
                                             }
-                                            ;
-                                            ;
-                                            ;
-	                                        console.log("responseJSON : ", JSON.stringify(responseJSON) );
-	                                        res.end("PUT request.");
-	                                    });//  addNewRecordtoJsonobjects().
+	                                    });//  addNewRecordtoJsonObjects().
                                     }
                                 });//  isRecordPresent().
                             }

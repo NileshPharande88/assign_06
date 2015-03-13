@@ -88,42 +88,141 @@ try {
     }//  readSourceFiles(parallel).
 
 
-    var isRecordPresent = function (students, newStudent) {
-        var isPresent = true;
+    var writeSourceFiles = function (jsonObjects, cb) {
+        async.parallel([
+            function (callback) {  //writing students.json
+                fs.writeFile("./sourceFiles/students.json", JSON.stringify(jsonObjects[0]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create students.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "students.json is get created.");
+                    }
+                });
+            },
+            function (callback) {  //writing sub_1.json
+                fs.writeFile("./sourceFiles/sub_1.json", JSON.stringify(jsonObjects[1]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create sub_1.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "sub_1.json is get created.");
+                    }
+                });
+            },
+            function (callback) {  //writing sub_2.json
+                fs.writeFile("./sourceFiles/sub_2.json", JSON.stringify(jsonObjects[2]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create sub_2.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "sub_2.json is get created.");
+                    }
+                });
+            },
+            function (callback) {  //writing sub_3.json
+                fs.writeFile("./sourceFiles/sub_3.json", JSON.stringify(jsonObjects[3]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create sub_3.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "sub_3.json is get created.");
+                    }
+                });
+            },
+            function (callback) {  //writing sub_4.json
+                fs.writeFile("./sourceFiles/sub_4.json", JSON.stringify(jsonObjects[4]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create sub_4.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "sub_4.json is get created.");
+                    }
+                });
+            },
+            function (callback) {  //writing sub_5.json
+                fs.writeFile("./sourceFiles/sub_5.json", JSON.stringify(jsonObjects[5]), function(err) {
+                    if (err) {  //return error if error occured in json file creation.
+                        callback(err, "Failed to create sub_5.json.");
+                    } else {  //Return message of successful creation of json file.
+                        callback(null, "sub_5.json is get created.");
+                    }
+                });
+            }
+        ],
+        // optional callback 
+        function(err, results){
+            if (err) {  //Returns an error if error occured in writing any of the subject files from json objects.
+                return cb(err, null);
+            } else {  //Returns array of json objects.
+                return cb(null, results);
+            }
+        });//  async.parallel().
+    }//  writeSourceFiles(parallel).
+
+
+    var isRecordPresent = function (students, newStudent, callback) {
+    	var isPresent = false;
         for (x in students) {  //Saparately access every students.
             if (students[x].email === newStudent.email) {
-                console.log("Error: Student with the same email is already present.");
+                console.log("Error: Student with the same email is already present.  ID: ", students[x].id );
+                isPresent = true;
                 break;
             } else if (students[x].name === newStudent.name) {
-                console.log("Error: Student with the same name is already present.");
+                console.log("Error: Student with the same name is already present.  ID: ", students[x].id );
+                isPresent = true;
                 break;
-            } else {  //student is already not in record.
-                isPresent = false;
             }
         }
-        return isPresent;
+        return callback ( isPresent );
     }//  isRecordPresent().
 
 
     var addNewRecordtoJsonobjects = function (newStudent, jsonObjects, callback) {
-        //Created new entry in students.json.
-        var students = jsonObjects[0].students;
+        //Created new entry in students.json's object.
+        var tempStudents = jsonObjects[0].students;
         var id = 1;
-        for (var x = 0; x < students.length; x++) {
-            if ( id === students[x].id ) {
+        for (var x = 0; x < tempStudents.length; x++) {
+            if ( id === tempStudents[x].id ) {
                 id++;
                 x = -1;
             }
         }
-        students[students.length].id = id;
-        students[students.length].email = newStudent.email;
-        students[students.length].name = newStudent.name;
-        console.log("Length before adding new element: ", jsonObjects[0].students.length);
-        jsonObjects[0].students.push( students[students.length] );  //Created new entry in students.json.
-        console.log("Length after adding new element: ", jsonObjects[0].students.length);
-        ;
-        ;
-        return callback(null);
+        tempStudents[0].id = id;
+        tempStudents[0].email = newStudent.email;
+        tempStudents[0].name = newStudent.name;
+        jsonObjects[0].students.push( tempStudents[0] );
+        //Created new entry in students.json's object.
+
+        //add student's data in sub_x.json file's objects.
+        newStudent.enrolledSubjects.forEach( function (subject) {  //access each subject id from new student record. 
+            var subjectIDFound = false;
+            for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
+                if ( subject.subjectId === jsonObjects[x].subjectId ) {  //If subject id found then add new record in same json.
+                    subjectIDFound = true;
+                    var tempjson = {
+                        "id": id,
+                        "score": 111
+                    };
+                    jsonObjects[x].enrolledStudents.push(tempjson);
+                    break;
+                }  //add new record in same json
+            }
+            if (!subjectIDFound) {  //as ubject with given idis not found, throw error message.
+                console.log("Subject id given by student is not found: ", subject.subjectId);
+            }
+        });//added student's data in sub_x.json file's objects.
+        //
+        //
+        //code to modify json files with modified json objects.
+        writeSourceFiles(jsonObjects, function (err,response) {
+            if (err) {
+                return callback(err, null);
+            } else {
+                console.log("Modified files: ",response.length);
+                console.log("before: ",JSON.stringify(newStudent));
+                newStudent.id = id;
+                console.log("After: ",JSON.stringify(newStudent));
+                ;
+                ;
+                return callback(null, null);
+            }
+        });
     }
 
 
@@ -153,18 +252,24 @@ try {
                             } else {
 
                                 var students = jsonObjects[0].students;
-                                if ( isRecordPresent(students, newStudent) ) {
-                                    res.end("Student is already present.");
-                                } else {  // Add a new student record in all source json files.
-                                	console.log("Student not already present.");
-                                	res.end("Student not already present.");
-            //                        addNewRecordtoJsonobjects(newStudent, jsonObjects, function (responseJSON) {
-            //                            console.log("responseJSON : ", JSON.stringify(responseJSON) );
-            //                            ;
-            //                            ;
-            //                            res.end("PUT request.");
-            //                        });//  addNewRecordtoJsonobjects().
-                                }//  isRecordPresent().
+                                isRecordPresent(students, newStudent, function (response) {
+                                    if (response) {
+                                        res.end("Student is already present.");
+                                    } else {
+                                        addNewRecordtoJsonobjects(newStudent, jsonObjects, function (err, responseJSON) {
+                                            if (err) {
+                                                ;
+                                            } else {
+                                                ;
+                                            }
+                                            ;
+                                            ;
+                                            ;
+	                                        console.log("responseJSON : ", JSON.stringify(responseJSON) );
+	                                        res.end("PUT request.");
+	                                    });//  addNewRecordtoJsonobjects().
+                                    }
+                                });//  isRecordPresent().
                             }
                         }
                     });//  readSourceFiles().

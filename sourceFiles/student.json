@@ -1,10 +1,16 @@
 {
-    "email":"john1@example.com",
-    "name":"John1 Doe",
-    "enrolledSubjects":
+    "email": "john1@example.com",
+    "name": "John1 Doe",
+    "enrolledSubjects": 
     [
-        {"subjectId":11},
-        {"subjectId":9},
-        {"subjectId":13}
+        {
+            "subjectId":11
+        },
+        {
+            "subjectId":9
+        },
+        {
+            "subjectId":13
+        }
     ]
 }

@@ -1,15 +1,15 @@
 {
-    "subjectId":12,
-    "subjectName":"Advanced Math Part 2",
-    "enrolledStudents":
+    "subjectId": 12,
+    "subjectName": "Advanced Math Part 2",
+    "enrolledStudents": 
     [
         {
-            "id":121,
-            "score":346
+            "id": 121,
+            "score": 346
         },
         {
-            "id":123,
-            "score":239
+            "id": 123,
+            "score": 239
         }
     ]
 }

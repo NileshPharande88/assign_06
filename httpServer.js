@@ -156,6 +156,7 @@ try {
     }//  writeSourceFiles(parallel).
 
 
+    //Search new student record in the array of source json files.
     var isRecordPresent = function (students, newStudent, callback) {
     	var isPresent = false;
         for (x in students) {  //Saparately access every students.
@@ -173,6 +174,7 @@ try {
     }//  isRecordPresent().
 
 
+    //Add records for a new students in sorces json objects and return the newStudent json object with the unique id.
     var addNewRecordtoJsonObjects = function (newStudent, jsonObjects, callback) {
         //Created new entry in students.json's object.
         var tempStudents = jsonObjects[0].students;
@@ -221,6 +223,45 @@ try {
     }
 
 
+    var createOperation = function (req, res, callback) {
+        var chunks = "";
+        req.on('data', function (chunk) {
+            chunks += chunk;
+        });
+        req.on('end', function () {
+            var newStudent = JSON.parse(chunks);
+            readSourceFiles( function (err, jsonObjects) {
+                if (err) {  //send error message if fails to read source files.
+                    res.end("Error in reading resource json files.");
+                    return callback(err, null);
+                } else {
+                    if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
+                        res.end("Error: Student element is not found in student.json.");
+                        return callback("Error: Student element is not found in student.json.", null);
+                    } else {
+                        var students = jsonObjects[0].students;
+                        isRecordPresent(students, newStudent, function (response) {
+                            if (response) {
+                                res.end("Error: Student is already present.");
+                                return callback("Error: Student is already present.", null);
+                            } else {
+                                addNewRecordtoJsonObjects(newStudent, jsonObjects, function (err, responseJSON) {
+                                    if (err) {
+                                        res.end("Error: Failed to create new record.");
+                                        return callback(err, null);
+                                    } else {
+                                        return callback(null, responseJSON);
+                                    }
+                                });//  addNewRecordtoJsonObjects().
+                            }
+                        });//  isRecordPresent().
+                    }
+                }
+            });//  readSourceFiles().
+        });//  req.on('end',).
+    }
+
+
     var server = http.createServer ( function (req, res) {
         var folderName = req.url.split('/')[1];  //devided url on base of "/".
         folderName = folderName.toLowerCase();  //Converte folder name to lower case.
@@ -228,43 +269,15 @@ try {
         if ( folderName === "favicon.ico" ) {
             res.end();   //Avoid un necessory execution of code.
         } else {  //Checkes the requset type and call respective functions for performing CRUD operations.
-
             if ( req.method === 'PUT' ) {//  If received PUT request from client then create the record.
-                var chunks = "";
-                req.on('data', function (chunk) {
-                    chunks += chunk;
+                createOperation(req, res, function (err, responseJSON) {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        console.log("responseJSON : ", JSON.stringify(responseJSON) );
+                        res.end( JSON.stringify(responseJSON) );
+                    }
                 });
-                req.on('end', function () {
-                    var newStudent = JSON.parse(chunks);
-                    readSourceFiles( function (err, jsonObjects) {
-                        if (err) {  //send error message if fails to read source files.
-                            console.log(err);
-                            res.end("Error in reading resource json files.");
-                        } else {
-                            if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
-                                console.log("Error: Student element is not found in student.json.");
-                                res.end("Error: Student element is not found in student.json.");
-                            } else {
-                                var students = jsonObjects[0].students;
-                                isRecordPresent(students, newStudent, function (response) {
-                                    if (response) {
-                                        res.end("Error: Student is already present.");
-                                    } else {
-                                        addNewRecordtoJsonObjects(newStudent, jsonObjects, function (err, responseJSON) {
-                                            if (err) {
-                                                console.log(err);
-                                                res.end("Error: Failed to create new record.");
-                                            } else {
-                                                console.log("responseJSON : ", JSON.stringify(responseJSON) );
-                                                res.end( JSON.stringify(responseJSON) );
-                                            }
-	                                    });//  addNewRecordtoJsonObjects().
-                                    }
-                                });//  isRecordPresent().
-                            }
-                        }
-                    });//  readSourceFiles().
-                });//  req.on('end',).
             }//  if ( req.method === 'PUT' )
             //res.end("temp res.end().");
 

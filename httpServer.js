@@ -3,6 +3,7 @@ try {
     var fs = require('fs');
     var qs = require('querystring');
     var async = require("async");
+    var url = require('url');
     var jsonReader = require("json-reader");
     
     //Checks the required modules are available or not.
@@ -10,6 +11,7 @@ try {
     if (fs === undefined) throw new Error( " Can't access fs module" );
     if (qs === undefined) throw new Error( " Can't access qs module" );
     if (async === undefined) throw new Error( " Can't access async module" );
+    if (url === undefined) throw new Error( " Can't access url module" );
     if (jsonReader === undefined) throw new Error( " Can't access json-reader module" );
 
 
@@ -87,7 +89,6 @@ try {
         });//  async.parallel().
     }//  readSourceFiles(parallel).
 
-
     var writeSourceFiles = function (jsonObjects, cb) {
         async.parallel([
             function (callback) {  //writing students.json
@@ -155,7 +156,6 @@ try {
         });//  async.parallel().
     }//  writeSourceFiles(parallel).
 
-
     //Search new student record in the array of source json files.
     var isRecordPresent = function (students, newStudent, callback) {
     	var isPresent = false;
@@ -172,7 +172,6 @@ try {
         }
         return callback ( isPresent );
     }//  isRecordPresent().
-
 
     //Add records for a new students in sorces json objects and return the newStudent json object with the unique id.
     var addNewRecordtoJsonObjects = function (newStudent, jsonObjects, callback) {
@@ -215,13 +214,11 @@ try {
             if (err) {
                 return callback(err, null);
             } else {
-                console.log("Modified files: ",response.length);
                 newStudent.id = id;
                 return callback(null, newStudent);
             }
         });
-    }
-
+    }//  addNewRecordtoJsonObjects().
 
     var createOperation = function (req, res, callback) {
         var chunks = "";
@@ -236,14 +233,14 @@ try {
                     return callback(err, null);
                 } else {
                     if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
-                        res.end("Error: Student element is not found in student.json.");
-                        return callback("Error: Student element is not found in student.json.", null);
+                        res.end("Error: Student element is not found in students.json.");
+                        return callback(new Error( "Student element is not found in students.json." ), null);
                     } else {
                         var students = jsonObjects[0].students;
                         isRecordPresent(students, newStudent, function (response) {
                             if (response) {
                                 res.end("Error: Student is already present.");
-                                return callback("Error: Student is already present.", null);
+                                return callback(new Error( "Student is already present." ), null);
                             } else {
                                 addNewRecordtoJsonObjects(newStudent, jsonObjects, function (err, responseJSON) {
                                     if (err) {
@@ -259,26 +256,106 @@ try {
                 }
             });//  readSourceFiles().
         });//  req.on('end',).
-    }
+    }//  createOperation().
+
+    var readOperation = function (req, res, callback) {
+        var path = url.parse(req.url).path;
+        path = path.toLowerCase();
+        var id = Number( path.split('{')[1].split("}")[0] );
+        if ( isNaN(id) ) {
+            res.end("Error: Entered id is not a number.");
+            return callback(new Error( "Entered id is not a number." ), null);
+        } else {
+            readSourceFiles( function (err, jsonObjects) {
+                if (err) {  //send error message if fails to read source files.
+                    res.end("Error in reading resource json files.");
+                    return callback(err, null);
+                } else {  //Successful to read source json files.
+                    if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
+                        res.end("Error: Student element is not found in students.json.");
+                        return callback(new Error( "Student element is not found in students.json." ), null);
+                    } else {
+                        var responseJSON = {};
+                        var students = jsonObjects[0].students;
+                        var index = -1;
+                        for (x in students) {  //Search for id sent by the client.
+                            if (students[x].id === id) {
+                                index = x;
+                                break;
+                            }
+                        }
+                        if (index === -1) {  //Throws if id not found in record.
+                            res.end("Error: Id not found in students record.");
+                            return callback(new Error( "Student element is not found in students.json." ), null);
+                        } else {  //start to form responceJSON from source files.
+                            responseJSON.id = students[index].id;
+                            responseJSON.email = students[index].email;
+                            responseJSON.name = students[index].name;
+
+                            responseJSON.enrolledSubjects = [];
+                            for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
+                                if ( jsonObjects[x].enrolledStudents !== undefined ) {
+                                    var enrolledStudents = jsonObjects[x].enrolledStudents;
+                                    for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
+                                        if ( enrolledStudents[y].id === responseJSON.id ) {
+                                            console.log("ID: ", jsonObjects[x]);
+                                            var tempSubject = {
+                                                "id": jsonObjects[x].subjectId,
+                                                "score": enrolledStudents[y].score
+                                            };  //Push enrolledSubject to array of responseJSON.
+                                            responseJSON.enrolledSubjects.push(tempSubject);
+                                            break;
+                                        } 
+                                    }
+                                }
+                            }
+                            return callback(null, responseJSON);
+                        }//  ready responceJSON from source files.
+                    }//  students json object.
+                }
+            });//  readSourceFiles().
+        }
+    }//  readOperation().
 
 
     var server = http.createServer ( function (req, res) {
-        var folderName = req.url.split('/')[1];  //devided url on base of "/".
-        folderName = folderName.toLowerCase();  //Converte folder name to lower case.
-
-        if ( folderName === "favicon.ico" ) {
+        var path = url.parse(req.url).path;
+        path = path.toLowerCase();  //Converte path to lowercase.
+        if ( path === "favicon.ico" ) {
             res.end();   //Avoid un necessory execution of code.
         } else {  //Checkes the requset type and call respective functions for performing CRUD operations.
             if ( req.method === 'PUT' ) {//  If received PUT request from client then create the record.
-                createOperation(req, res, function (err, responseJSON) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        console.log("responseJSON : ", JSON.stringify(responseJSON) );
-                        res.end( JSON.stringify(responseJSON) );
-                    }
-                });
-            }//  if ( req.method === 'PUT' )
+                if ( path === "/api/student" ) {
+                    createOperation(req, res, function (err, responseJSON) {
+                        if (err) {  //Wrotes an error if reading record was failed.
+                            console.log(err);
+                        } else { //Returns the created record as json object with id to the client.
+                            console.log("Successful to create record.");
+                            res.writeHead(200, {'Content-Type': 'application/json' });
+                            res.end( JSON.stringify(responseJSON) );
+                        }
+                    });//  createOperation().
+                } else {
+                    console.log("Error: Wrong url entered.");
+                    res.end("Error: Wrong url entered.");
+                }
+                //  if ( req.method === 'PUT' ).
+            } else if ( req.method === 'GET' ) {//  If received GET request from client then read the record.
+                if ( path.search("/api/student/") !== -1 ) {
+                    readOperation(req, res, function (err, responseJSON) {
+                        if (err) {  //Wrotes an error if reading record was failed.
+                            console.log(err);
+                        } else {  //Returns the readed record as json object to the client.
+                            res.writeHead(200, {'Content-Type': 'application/json' });
+                            res.end( JSON.stringify(responseJSON) );
+                        }
+                    });//  readOperation().
+                } else {
+                    console.log("Error: Wrong url entered.");
+                    res.end("Error: Wrong url entered.");
+                }
+                //  if ( req.method === 'GET' ).
+            }
             //res.end("temp res.end().");
 
         }//  ( folderName === "favicon.ico" )

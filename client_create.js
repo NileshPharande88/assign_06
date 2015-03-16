@@ -35,7 +35,7 @@ try {
                             if (err) {  //return error if error occured in json file creation.
                                 console.log("Failed to create student.json.");
                             } else {  //Return message of successful creation of json file.
-                                console.log("successful to create student.json.");
+                                console.log("Successful to create student.json.");
                             }
                         });
                     }

@@ -6,7 +6,7 @@ try {
 
     var options = {
         host: '127.0.0.1',
-        path: '/api/student/{' +process.argv.slice(2)[0]+ '}',
+        path: '/api/students/',
         port: '1337',
         method: 'GET',
 //        headers: {'accept': 'text/plain'}
@@ -23,11 +23,11 @@ try {
                 console.log(chunks);
             } else {
                 var studentJSON = JSON.parse(chunks);
-                fs.writeFile("./sourceFiles/student.json", JSON.stringify(studentJSON), function(err) {
+                fs.writeFile("./sourceFiles/studentRecord.json", JSON.stringify(studentJSON), function(err) {
                     if (err) {  //return error if error occured in json file creation.
                         console.log("Failed to create student.json.");
                     } else {  //Return message of successful creation of json file.
-                    	console.log("Successful to create student.json.");
+                    	console.log("Successful to create student.json: ", studentJSON.students);
                     }
                 });
             }

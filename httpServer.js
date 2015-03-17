@@ -284,10 +284,9 @@ try {
                     var enrolledStudents = jsonObjects[x].enrolledStudents;
                     for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
                         if ( enrolledStudents[y].id === responseJSON.id ) {
-                            console.log("ID: ", jsonObjects[x]);
                             var tempSubject = {
-                                "id": jsonObjects[x].subjectId,
-                                "score": enrolledStudents[y].score
+                                "subjectId": jsonObjects[x].subjectId,
+                                "subjectName": jsonObjects[x].subjectName
                             };  //Push enrolledSubject to array of responseJSON.
                             responseJSON.enrolledSubjects.push(tempSubject);
                             break;
@@ -326,9 +325,57 @@ try {
     }//  readOperation().
 
 
+    var getStudentJSONByIndex = function (index, jsonObjects, callback) {
+        var studentJSON = {};
+        var students = jsonObjects[0].students;
+        studentJSON.id = students[index].id;
+        studentJSON.email = students[index].email;
+        studentJSON.name = students[index].name;
+
+        //Add record for enrolled subjects.
+        studentJSON.subjects = [];
+        for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
+            if ( jsonObjects[x].enrolledStudents !== undefined ) {
+                var enrolledStudents = jsonObjects[x].enrolledStudents;
+                for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
+                    if ( enrolledStudents[y].id === studentJSON.id ) {
+                        var tempSubject = {
+                            "subjectId": jsonObjects[x].subjectId,
+                            "subjectName": jsonObjects[x].subjectName,
+                            "score": enrolledStudents[y].score
+                        };  //Push enrolledSubject to array of responseJSON.
+                        studentJSON.subjects.push(tempSubject);
+                        break;
+                    } 
+                }
+            }
+        }
+        return callback(null, studentJSON);
+    }
+
     var readListOperation = function (req, res, callback) {
-        ;
-        return callback(null, null);
+        readSourceFiles( function (err, jsonObjects) {
+            if (err) {  //send error message if fails to read source files.
+                res.end("Error in reading resource json files.");
+                return callback(err, null);
+            } else {
+                if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
+                    res.end("Error: Student element is not found in students.json.");
+                    return callback(new Error( "Student element is not found in students.json." ), null);
+                } else {
+                    var responseJSON = {};
+                    responseJSON.students = [];
+                    for (x in jsonObjects[0].students) {
+                        getStudentJSONByIndex(x, jsonObjects, function (err, studentJSON) {
+                            responseJSON.students.push( studentJSON );
+                            if(Number(x) === (jsonObjects[0].students.length - 1) ) {  //return responseJSON
+                                return callback(null, responseJSON);
+                            }
+                        });//  getResponseJSONByIndex().
+                    }
+                }
+            }
+        })//  readSourceFiles().
     }
 
 
@@ -339,7 +386,7 @@ try {
             res.end();   //Avoid un necessory execution of code.
         } else {  //Checkes the requset type and call respective functions for performing CRUD operations.
             if ( req.method === 'PUT' ) {//  If received PUT request from client then create the record.
-                if ( path === "/api/student" ) {
+                if ( path === "/api/student" ) {  //Perform create operation.
                     createOperation(req, res, function (err, responseJSON) {
                         if (err) {  //Wrotes an error if reading record was failed.
                             console.log(err);
@@ -355,7 +402,7 @@ try {
                 }
                 //  if ( req.method === 'PUT' ).
             } else if ( req.method === 'GET' ) {//  If received GET request from client then read the record.
-                if ( path.search("/api/student/") !== -1 ) {
+                if ( path.search("/api/student/") !== -1 ) {  //Perform read operation.
                     readOperation(req, res, function (err, responseJSON) {
                         if (err) {  //Wrotes an error if reading record was failed.
                             console.log(err);
@@ -364,6 +411,15 @@ try {
                             res.end( JSON.stringify(responseJSON) );
                         }
                     });//  readOperation().
+                } else if ( path.search("/api/students/") !== -1 ) {  //Perform read/List operation.
+                    readListOperation(req, res, function (err, responseJSON) {
+                        if (err) {  //Wrotes an error if reading record was failed.
+                            console.log(err);
+                        } else {  //Returns the readed record as json object to the client.
+                            res.writeHead(200, {'Content-Type': 'application/json' });
+                            res.end( JSON.stringify(responseJSON) );
+                        }
+                    });//  readListOperation().
                 } else {
                     console.log("Error: Wrong url entered.");
                     res.end("Error: Wrong url entered.");
@@ -381,3 +437,19 @@ try {
 } catch (err) {
     console.log(err);
 }
+
+
+
+
+
+
+
+async.parallel([
+    function (callback) {
+    },
+    function (callback) {
+    }
+],
+// optional callback 
+function(err, results){
+});//  async.parallel().

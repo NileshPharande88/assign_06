@@ -260,7 +260,6 @@ try {
 
 
     var getResponseJSONById = function (id, res, jsonObjects, callback) {
-        var responseJSON = {};
         var students = jsonObjects[0].students;
         var index = -1;
         for (x in students) {  //Search for id sent by the client.
@@ -273,6 +272,7 @@ try {
             res.end("Error: Id not found in students record.");
             return callback(new Error( "Student element is not found in students.json." ), null);
         } else {  //start to form responceJSON from source files.
+            var responseJSON = {};
             responseJSON.id = students[index].id;
             responseJSON.email = students[index].email;
             responseJSON.name = students[index].name;
@@ -296,9 +296,7 @@ try {
             }
             return callback(null, responseJSON);
         }//  ready responceJSON from source files.
-        ;
-        ;
-    }
+    }  //getResponseJSONById().
 
     var readOperation = function (req, res, callback) {
         var path = url.parse(req.url).path;
@@ -351,7 +349,7 @@ try {
             }
         }
         return callback(null, studentJSON);
-    }
+    }  //getStudentJSONByIndex().
 
     var readListOperation = function (req, res, callback) {
         readSourceFiles( function (err, jsonObjects) {
@@ -376,7 +374,73 @@ try {
                 }
             }
         })//  readSourceFiles().
-    }
+    }  //readListOperation().
+
+
+
+    var modifyStudentRecordById = function (id, req, res, jsonObjects, callback) {
+        var responseJSON = {};
+        var students = jsonObjects[0].students;
+        var index = -1;
+        for (x in students) {  //Search for id sent by the client.
+            if (students[x].id === id) {
+                index = x;
+                break;
+            }
+        }
+        if (index === -1) {  //Throws if id not found in record.
+            res.end("Error: Id not found in students record.");
+            return callback(new Error( "Student element is not found in students.json." ), null);
+        } else {  //start to form modify student record from source files.
+            var chunks = "";
+            req.on('data', function (chunk) {
+                chunks += chunk;
+            });
+            req.on('end', function () {
+                var newStudent = JSON.parse(chunks);
+                ;
+                ;
+                ;
+                return callback(null, null);
+            });//  req.on('end',).
+        }
+    }  //modifyStudentRecordById().
+
+
+    var updateOperation = function (req, res, callback) {
+        var path = url.parse(req.url).path;
+        path = path.toLowerCase();
+        var id = Number( path.split('{')[1].split("}")[0] );
+        if ( isNaN(id) ) {
+            res.end("Error: Entered id is not a number.");
+            return callback(new Error( "Entered id is not a number." ), null);
+        } else {
+            readSourceFiles( function (err, jsonObjects) {
+                if (err) {  //send error message if fails to read source files.
+                    res.end("Error in reading resource json files.");
+                    return callback(err, null);
+                } else {  //Successful to read source json files.
+                    if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
+                        res.end("Error: Student element is not found in students.json.");
+                        return callback(new Error( "Student element is not found in students.json." ), null);
+                    } else {
+                        modifyStudentRecordById(id, req, res, jsonObjects, function (err, responseJSON) {
+                            if (err) {
+                                ;
+                                ;
+                                return callback(err, null);
+                            } else {
+                                ;
+                                ;
+                                return callback(null, null);
+                            }
+                        });
+                    }//  students json object.
+                }
+            });//  readSourceFiles().
+        }
+    }  //updateOperation().
+
 
 
     var server = http.createServer ( function (req, res) {
@@ -407,6 +471,7 @@ try {
                         if (err) {  //Wrotes an error if reading record was failed.
                             console.log(err);
                         } else {  //Returns the readed record as json object to the client.
+                            console.log("Successful to read record.");
                             res.writeHead(200, {'Content-Type': 'application/json' });
                             res.end( JSON.stringify(responseJSON) );
                         }
@@ -416,6 +481,7 @@ try {
                         if (err) {  //Wrotes an error if reading record was failed.
                             console.log(err);
                         } else {  //Returns the readed record as json object to the client.
+                            console.log("Successful to read all records.");
                             res.writeHead(200, {'Content-Type': 'application/json' });
                             res.end( JSON.stringify(responseJSON) );
                         }
@@ -425,6 +491,21 @@ try {
                     res.end("Error: Wrong url entered.");
                 }
                 //  if ( req.method === 'GET' ).
+            } else if ( req.method === 'POST' ) {//  If received POST request from client then update the record.
+                if ( path.search("/api/student/") !== -1 ) {  //Perform update operation.
+                    updateOperation(req, res, function (err, responseJSON) {
+                        if (err) {  //Wrotes an error if reading record was failed.
+                            console.log(err);
+                        } else { //Returns the created record as json object with id to the client.
+                            console.log("Successful to update record.");
+                        //    res.writeHead(200, {'Content-Type': 'application/json' });
+                            res.end("Error: Successful.....");
+                        }
+                    });//  createOperation().
+                } else {
+                    console.log("Error: Wrong url entered.");
+                    res.end("Error: Wrong url entered.");
+                }
             }
             //res.end("temp res.end().");
 
@@ -437,19 +518,3 @@ try {
 } catch (err) {
     console.log(err);
 }
-
-
-
-
-
-
-
-async.parallel([
-    function (callback) {
-    },
-    function (callback) {
-    }
-],
-// optional callback 
-function(err, results){
-});//  async.parallel().

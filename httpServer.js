@@ -258,6 +258,49 @@ try {
         });//  req.on('end',).
     }//  createOperation().
 
+
+    var getResponseJSONById = function (id, res, jsonObjects, callback) {
+        var responseJSON = {};
+        var students = jsonObjects[0].students;
+        var index = -1;
+        for (x in students) {  //Search for id sent by the client.
+            if (students[x].id === id) {
+                index = x;
+                break;
+            }
+        }
+        if (index === -1) {  //Throws if id not found in record.
+            res.end("Error: Id not found in students record.");
+            return callback(new Error( "Student element is not found in students.json." ), null);
+        } else {  //start to form responceJSON from source files.
+            responseJSON.id = students[index].id;
+            responseJSON.email = students[index].email;
+            responseJSON.name = students[index].name;
+
+            //Add record for enrolled subjects.
+            responseJSON.enrolledSubjects = [];
+            for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
+                if ( jsonObjects[x].enrolledStudents !== undefined ) {
+                    var enrolledStudents = jsonObjects[x].enrolledStudents;
+                    for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
+                        if ( enrolledStudents[y].id === responseJSON.id ) {
+                            console.log("ID: ", jsonObjects[x]);
+                            var tempSubject = {
+                                "id": jsonObjects[x].subjectId,
+                                "score": enrolledStudents[y].score
+                            };  //Push enrolledSubject to array of responseJSON.
+                            responseJSON.enrolledSubjects.push(tempSubject);
+                            break;
+                        } 
+                    }
+                }
+            }
+            return callback(null, responseJSON);
+        }//  ready responceJSON from source files.
+        ;
+        ;
+    }
+
     var readOperation = function (req, res, callback) {
         var path = url.parse(req.url).path;
         path = path.toLowerCase();
@@ -275,47 +318,18 @@ try {
                         res.end("Error: Student element is not found in students.json.");
                         return callback(new Error( "Student element is not found in students.json." ), null);
                     } else {
-                        var responseJSON = {};
-                        var students = jsonObjects[0].students;
-                        var index = -1;
-                        for (x in students) {  //Search for id sent by the client.
-                            if (students[x].id === id) {
-                                index = x;
-                                break;
-                            }
-                        }
-                        if (index === -1) {  //Throws if id not found in record.
-                            res.end("Error: Id not found in students record.");
-                            return callback(new Error( "Student element is not found in students.json." ), null);
-                        } else {  //start to form responceJSON from source files.
-                            responseJSON.id = students[index].id;
-                            responseJSON.email = students[index].email;
-                            responseJSON.name = students[index].name;
-
-                            responseJSON.enrolledSubjects = [];
-                            for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
-                                if ( jsonObjects[x].enrolledStudents !== undefined ) {
-                                    var enrolledStudents = jsonObjects[x].enrolledStudents;
-                                    for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
-                                        if ( enrolledStudents[y].id === responseJSON.id ) {
-                                            console.log("ID: ", jsonObjects[x]);
-                                            var tempSubject = {
-                                                "id": jsonObjects[x].subjectId,
-                                                "score": enrolledStudents[y].score
-                                            };  //Push enrolledSubject to array of responseJSON.
-                                            responseJSON.enrolledSubjects.push(tempSubject);
-                                            break;
-                                        } 
-                                    }
-                                }
-                            }
-                            return callback(null, responseJSON);
-                        }//  ready responceJSON from source files.
+                        getResponseJSONById(id, res, jsonObjects, callback);
                     }//  students json object.
                 }
             });//  readSourceFiles().
         }
     }//  readOperation().
+
+
+    var readListOperation = function (req, res, callback) {
+        ;
+        return callback(null, null);
+    }
 
 
     var server = http.createServer ( function (req, res) {

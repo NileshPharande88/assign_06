@@ -31,11 +31,11 @@ try {
                         console.log(chunks);
                     } else {
                         var studentJSON = JSON.parse(chunks);
-                        fs.writeFile("./sourceFiles/student.json", JSON.stringify(studentJSON), function(err) {
+                        fs.writeFile("./sourceFiles/studentUpdate.json", JSON.stringify(studentJSON), function(err) {
                             if (err) {  //return error if error occured in json file creation.
-                                console.log("Failed to create student.json.");
+                                console.log("Failed to create studentUpdate.json.");
                             } else {  //Return message of successful creation of json file.
-                                console.log("Successful to create student.json.");
+                                console.log("Successful to create studentUpdate.json.");
                             }
                         });
                     }
@@ -44,7 +44,7 @@ try {
 
 
             var request = http.request(options, callback);
-            //Send student.json file to the server.
+            //Send studentUpdate.json file to the server.
             request.write( JSON.stringify(object), function (bSuccess) {
                 if(bSuccess) {
                     console.log("file not send.");

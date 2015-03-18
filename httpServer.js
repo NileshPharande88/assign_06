@@ -379,10 +379,9 @@ try {
 
 
     var modifyStudentRecordById = function (id, req, res, jsonObjects, callback) {
-        var responseJSON = {};
         var students = jsonObjects[0].students;
         var index = -1;
-        for (x in students) {  //Search for id sent by the client.
+        for (x in students) {  //Search for student id sent by the client inside students.json.
             if (students[x].id === id) {
                 index = x;
                 break;
@@ -397,11 +396,33 @@ try {
                 chunks += chunk;
             });
             req.on('end', function () {
-                var newStudent = JSON.parse(chunks);
-                ;
-                ;
-                ;
-                return callback(null, null);
+                var newStudent = JSON.parse(chunks);  //Parse the incoming json from request.
+                jsonObjects[0].students[index].id = Number( newStudent.id );
+                jsonObjects[0].students[index].email = newStudent.email;
+                jsonObjects[0].students[index].name = newStudent.name;
+
+                newStudent.enrolledSubjects.forEach(function (subject) {  //access each subject from the new student separately
+                    for (var x = 1; x < jsonObjects.length; x++) {  //access each source subject.json separately.
+                        if (jsonObjects[x].subjectId === subject.subjectId) {  //matches the subject id.
+                            var enrolledStudents = jsonObjects[x].enrolledStudents;
+                            for (var y = 0; y < enrolledStudents.length; y++) {  //Access student record from subject.json
+                                if (enrolledStudents[y].id === id) {  //matches the student id inside subject.json.
+                                    jsonObjects[x].enrolledStudents[y].id = Number( newStudent.id );
+                                    jsonObjects[x].enrolledStudents[y].score = 111;
+                                    break;
+                                }
+                            }//Access student record from subject.json
+                        }
+                    }//access each source subject.json separately.
+                });//access each subject from the new student separately
+                writeSourceFiles(jsonObjects, function (err,response) {
+                    if (err) {
+                        res.end("Error: Failed to write json objects to the file.json.");
+                        return callback(err, null);
+                    } else {
+                        return callback(null, newStudent);
+                    }
+                });
             });//  req.on('end',).
         }
     }  //modifyStudentRecordById().
@@ -424,17 +445,7 @@ try {
                         res.end("Error: Student element is not found in students.json.");
                         return callback(new Error( "Student element is not found in students.json." ), null);
                     } else {
-                        modifyStudentRecordById(id, req, res, jsonObjects, function (err, responseJSON) {
-                            if (err) {
-                                ;
-                                ;
-                                return callback(err, null);
-                            } else {
-                                ;
-                                ;
-                                return callback(null, null);
-                            }
-                        });
+                        modifyStudentRecordById(id, req, res, jsonObjects, callback);
                     }//  students json object.
                 }
             });//  readSourceFiles().
@@ -498,8 +509,8 @@ try {
                             console.log(err);
                         } else { //Returns the created record as json object with id to the client.
                             console.log("Successful to update record.");
-                        //    res.writeHead(200, {'Content-Type': 'application/json' });
-                            res.end("Error: Successful.....");
+                            res.writeHead(200, {'Content-Type': 'application/json' });
+                            res.end( JSON.stringify(responseJSON) );
                         }
                     });//  createOperation().
                 } else {

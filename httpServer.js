@@ -451,7 +451,6 @@ try {
     }  //updateOperation().
 
 
-
     var deleteResponseJSONById = function (id, res, jsonObjects, callback) {
         var students = jsonObjects[0].students;
         var index = -1;
@@ -490,8 +489,6 @@ try {
         }//All records are deleted.
     }//deleteResponseJSONById().
 
-
-
     var deleteOperation = function (req, res, callback) {
         var path = url.parse(req.url).path;
         path = path.toLowerCase();
@@ -515,7 +512,6 @@ try {
             });//readSourceFiles().
         }
     }//deleteOperation().
-
 
 
     var server = http.createServer ( function (req, res) {

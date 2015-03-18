@@ -282,7 +282,7 @@ try {
             for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
                 if ( jsonObjects[x].enrolledStudents !== undefined ) {
                     var enrolledStudents = jsonObjects[x].enrolledStudents;
-                    for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
+                    for (var y = 0; y < enrolledStudents.length; y++) {  //access each enrolledSubject from sub_x.json.
                         if ( enrolledStudents[y].id === responseJSON.id ) {
                             var tempSubject = {
                                 "subjectId": jsonObjects[x].subjectId,
@@ -335,7 +335,7 @@ try {
         for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
             if ( jsonObjects[x].enrolledStudents !== undefined ) {
                 var enrolledStudents = jsonObjects[x].enrolledStudents;
-                for (var y = 0; y < enrolledStudents.length; y++) {  //create each enrolledSubject from sub_x.json.
+                for (var y = 0; y < enrolledStudents.length; y++) {  //access each enrolledSubject from sub_x.json.
                     if ( enrolledStudents[y].id === studentJSON.id ) {
                         var tempSubject = {
                             "subjectId": jsonObjects[x].subjectId,
@@ -375,7 +375,6 @@ try {
             }
         })//  readSourceFiles().
     }  //readListOperation().
-
 
 
     var modifyStudentRecordById = function (id, req, res, jsonObjects, callback) {
@@ -427,7 +426,6 @@ try {
         }
     }  //modifyStudentRecordById().
 
-
     var updateOperation = function (req, res, callback) {
         var path = url.parse(req.url).path;
         path = path.toLowerCase();
@@ -451,6 +449,72 @@ try {
             });//  readSourceFiles().
         }
     }  //updateOperation().
+
+
+
+    var deleteResponseJSONById = function (id, res, jsonObjects, callback) {
+        var students = jsonObjects[0].students;
+        var index = -1;
+        for (x in students) {  //Search for id sent by the client.
+            if (students[x].id === id) {
+                index = x;
+                break;
+            }
+        }
+        if (index === -1) {  //Throws if id not found in record.
+            res.end("Error: Id not found in students record.");
+            return callback(new Error( "Student element is not found in students.json." ), null);
+        } else {  //start to delete records from source files.
+            jsonObjects[0].students.splice(index, 1);
+
+            //Delete record for enrolled subjects.
+            for (var x = 1; x < jsonObjects.length; x++) {  //access each subject json separately.
+                if ( jsonObjects[x].enrolledStudents !== undefined ) {
+                    var enrolledStudents = jsonObjects[x].enrolledStudents;
+                    for (var y = 0; y < enrolledStudents.length; y++) {  //access each enrolledSubject from sub_x.json.
+                        if ( enrolledStudents[y].id === id ) {
+                            jsonObjects[x].enrolledStudents.splice(y, 1);
+                            break;
+                        } 
+                    }
+                }
+            }
+            writeSourceFiles(jsonObjects, function (err,response) {
+                if (err) {
+                    res.end("Error: Failed to write json objects to the file.json.");
+                    return callback(err, null);
+                } else {
+                    return callback(null, id);
+                }
+            });
+        }//All records are deleted.
+    }//deleteResponseJSONById().
+
+
+
+    var deleteOperation = function (req, res, callback) {
+        var path = url.parse(req.url).path;
+        path = path.toLowerCase();
+        var id = Number( path.split('{')[1].split("}")[0] );
+        if ( isNaN(id) ) {
+            res.end("Error: Entered id is not a number.");
+            return callback(new Error( "Entered id is not a number." ), null);
+        } else {
+            readSourceFiles( function (err, jsonObjects) {
+                if (err) {  //send error message if fails to read source files.
+                    res.end("Error in reading resource json files.");
+                    return callback(err, null);
+                } else {  //Successful to read source json files.
+                    if (jsonObjects[0].students === undefined ) {  //sends error message if Student element is not found in student.json.
+                        res.end("Error: Student element is not found in students.json.");
+                        return callback(new Error( "Student element is not found in students.json." ), null);
+                    } else {
+                        deleteResponseJSONById(id, res, jsonObjects, callback);
+                    }//students json object.
+                }
+            });//readSourceFiles().
+        }
+    }//deleteOperation().
 
 
 
@@ -505,14 +569,32 @@ try {
             } else if ( req.method === 'POST' ) {//  If received POST request from client then update the record.
                 if ( path.search("/api/student/") !== -1 ) {  //Perform update operation.
                     updateOperation(req, res, function (err, responseJSON) {
-                        if (err) {  //Wrotes an error if reading record was failed.
+                        if (err) {  //Wrotes an error if update record was failed.
                             console.log(err);
-                        } else { //Returns the created record as json object with id to the client.
+                        } else { //Returns the updated record as json object with id to the client.
                             console.log("Successful to update record.");
                             res.writeHead(200, {'Content-Type': 'application/json' });
                             res.end( JSON.stringify(responseJSON) );
                         }
-                    });//  createOperation().
+                    });//  updateOperation().
+                } else {
+                    console.log("Error: Wrong url entered.");
+                    res.end("Error: Wrong url entered.");
+                }
+            } else if ( req.method === 'DELETE' ) {//  If received POST request from client then update the record.
+                if ( path.search("/api/student/") !== -1 ) {  //Perform update operation.
+                    deleteOperation(req, res, function (err, responseId) {
+                        if (err) {  //Wrotes an error if delete record was failed.
+                            console.log(err);
+                        } else { //Returns the id of deleted record as json object to the client.
+                            console.log("Successful to delete record.");
+                            res.writeHead(200, {'Content-Type': 'application/json' });
+                            var tempJSON = {
+                                "id": responseId
+                            }
+                            res.end( JSON.stringify(tempJSON) );
+                        }
+                    });//  deleteOperation().
                 } else {
                     console.log("Error: Wrong url entered.");
                     res.end("Error: Wrong url entered.");

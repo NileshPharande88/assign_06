@@ -1,18 +1,30 @@
 try {
-    var http = require("http");
     var fs = require('fs');
-    var qs = require('querystring');
-    var async = require("async");
     var url = require('url');
+    var http = require("http");
+    var async = require("async");
+    var qs = require('querystring');
     var jsonReader = require("json-reader");
     
     //Checks the required modules are available or not.
-    if (http === undefined) throw new Error( " Can't access http module" );
-    if (fs === undefined) throw new Error( " Can't access fs module" );
-    if (qs === undefined) throw new Error( " Can't access qs module" );
-    if (async === undefined) throw new Error( " Can't access async module" );
-    if (url === undefined) throw new Error( " Can't access url module" );
-    if (jsonReader === undefined) throw new Error( " Can't access json-reader module" );
+    if (fs === undefined) {
+        throw new Error(" Can't access fs module.");
+    }
+    if (url === undefined) {
+        throw new Error(" Can't access url module.");
+    }
+    if (http === undefined) {
+        throw new Error(" Can't access http module.");
+    }
+    if (async === undefined) {
+        throw new Error(" Can't access async module.");
+    }
+    if (qs === undefined) {
+        throw new Error(" Can't access querystring module.");
+    }
+    if (jsonReader === undefined) {
+        throw new Error(" Can't access jsonReader module.");
+    }
 
 
     //  Read all source files parallely.
@@ -514,95 +526,96 @@ try {
     }//deleteOperation().
 
 
-    var server = http.createServer ( function (req, res) {
+    var server = http.createServer ( function serverHandler(req, res) {
         var path = url.parse(req.url).path;
         path = path.toLowerCase();  //Converte path to lowercase.
         if ( path === "favicon.ico" ) {
             res.end();   //Avoid un necessory execution of code.
         } else {  //Checkes the requset type and call respective functions for performing CRUD operations.
             if ( req.method === 'PUT' ) {//  If received PUT request from client then create the record.
-                if ( path === "/api/student" ) {  //Perform create operation.
-                    createOperation(req, res, function (err, responseJSON) {
-                        if (err) {  //Wrotes an error if reading record was failed.
-                            console.log(err);
-                        } else { //Returns the created record as json object with id to the client.
-                            console.log("Successful to create record.");
-                            res.writeHead(200, {'Content-Type': 'application/json' });
-                            res.end( JSON.stringify(responseJSON) );
-                        }
-                    });//  createOperation().
-                } else {
-                    console.log("Error: Wrong url entered.");
+                if ( path !== "/api/student" ) {
                     res.end("Error: Wrong url entered.");
+                    throw new Error(" Wrong url entered.");
                 }
-                //  if ( req.method === 'PUT' ).
+                //Perform create operation.
+                createOperation(req, res, function creatorHandler(err, responseJSON) {
+                    if (err) {
+                        throw err;
+                    }
+                    //Returns the created record as json object with id to the client.
+                    console.log("Successful to create record.");
+                    res.writeHead(200, {'Content-Type': 'application/json' });
+                    res.end( JSON.stringify(responseJSON) );
+                });//  createOperation().
             } else if ( req.method === 'GET' ) {//  If received GET request from client then read the record.
                 if ( path.search("/api/student/") !== -1 ) {  //Perform read operation.
-                    readOperation(req, res, function (err, responseJSON) {
-                        if (err) {  //Wrotes an error if reading record was failed.
-                            console.log(err);
-                        } else {  //Returns the readed record as json object to the client.
-                            console.log("Successful to read record.");
-                            res.writeHead(200, {'Content-Type': 'application/json' });
-                            res.end( JSON.stringify(responseJSON) );
+                    readOperation(req, res, function readrHandler(err, responseJSON) {
+                        if (err) {
+                            throw err;
                         }
-                    });//  readOperation().
+                        //Returns the readed record as json object to the client.
+                        console.log("Successful to read record.");
+                        res.writeHead(200, {'Content-Type': 'application/json' });
+                        res.end( JSON.stringify(responseJSON) );
+                    });  //readOperation().
                 } else if ( path.search("/api/students/") !== -1 ) {  //Perform read/List operation.
-                    readListOperation(req, res, function (err, responseJSON) {
-                        if (err) {  //Wrotes an error if reading record was failed.
-                            console.log(err);
-                        } else {  //Returns the readed record as json object to the client.
-                            console.log("Successful to read all records.");
-                            res.writeHead(200, {'Content-Type': 'application/json' });
-                            res.end( JSON.stringify(responseJSON) );
+                    readListOperation(req, res, function readListHandler(err, responseJSON) {
+                        if (err) {
+                            throw err;
                         }
+                        //Returns the readed records as json object to the client.
+                        console.log("Successful to read all records.");
+                        res.writeHead(200, {'Content-Type': 'application/json' });
+                        res.end( JSON.stringify(responseJSON) );
                     });//  readListOperation().
                 } else {
                     console.log("Error: Wrong url entered.");
                     res.end("Error: Wrong url entered.");
                 }
-                //  if ( req.method === 'GET' ).
+                //if ( req.method === 'GET' ).
             } else if ( req.method === 'POST' ) {//  If received POST request from client then update the record.
-                if ( path.search("/api/student/") !== -1 ) {  //Perform update operation.
-                    updateOperation(req, res, function (err, responseJSON) {
-                        if (err) {  //Wrotes an error if update record was failed.
-                            console.log(err);
-                        } else { //Returns the updated record as json object with id to the client.
-                            console.log("Successful to update record.");
-                            res.writeHead(200, {'Content-Type': 'application/json' });
-                            res.end( JSON.stringify(responseJSON) );
-                        }
-                    });//  updateOperation().
-                } else {
-                    console.log("Error: Wrong url entered.");
+                if ( path.search("/api/student/") === -1 ) {
                     res.end("Error: Wrong url entered.");
+                     throw new Error(" Wrong url entered.");
                 }
+                //Perform update operation.
+                updateOperation(req, res, function updateHandler(err, responseJSON) {
+                    if (err) {  //Wrotes an error if update record was failed.
+                        throw err;
+                    }
+                    //Returns the updated record as json object with id to the client.
+                    console.log("Successful to update record.");
+                    res.writeHead(200, {'Content-Type': 'application/json' });
+                    res.end( JSON.stringify(responseJSON) );
+                });//  updateOperation().
             } else if ( req.method === 'DELETE' ) {//  If received POST request from client then update the record.
-                if ( path.search("/api/student/") !== -1 ) {  //Perform update operation.
-                    deleteOperation(req, res, function (err, responseId) {
-                        if (err) {  //Wrotes an error if delete record was failed.
-                            console.log(err);
-                        } else { //Returns the id of deleted record as json object to the client.
-                            console.log("Successful to delete record.");
-                            res.writeHead(200, {'Content-Type': 'application/json' });
-                            var tempJSON = {
-                                "id": responseId
-                            }
-                            res.end( JSON.stringify(tempJSON) );
-                        }
-                    });//  deleteOperation().
-                } else {
-                    console.log("Error: Wrong url entered.");
+                if ( path.search("/api/student/") === -1 ) {
                     res.end("Error: Wrong url entered.");
+                    throw new Error(" Wrong url entered.");
                 }
+                //Perform update operation.
+                deleteOperation(req, res, function deleteHandler(err, responseId) {
+                    if (err) {
+                        throw err;
+                    }
+                    //Returns the id of deleted record as json object to the client.
+                    console.log("Successful to delete record.");
+                    res.writeHead(200, {'Content-Type': 'application/json' });
+                    var tempJSON = {
+                        "id": responseId
+                    }
+                    res.end( JSON.stringify(tempJSON) );
+                });//  deleteOperation().
+            } else {
+                console.log("Error: Unknown request meentod.");
+                res.end("Error: Unknown request meentod.");
             }
             //res.end("temp res.end().");
+        }  //( folderName === "favicon.ico" )
+    });  //http.createServer().
 
-        }//  ( folderName === "favicon.ico" )
-    });//  http.createServer().
-
-    server.listen( 1337, "127.0.0.1", function() {
-        console.log( "Listening on: 127.0.0.1: 1337" );
+    server.listen( 1337, "127.0.0.1", function listenerHandler() {
+        console.log("Listening on: 127.0.0.1: 1337");
     });
 } catch (err) {
     console.log(err);

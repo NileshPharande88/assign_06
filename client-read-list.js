@@ -1,8 +1,12 @@
 try {
-    var http = require('http');
     var fs = require('fs');
-    if ((http === undefined)) throw new Error( " Can't access http module" );
-    if (fs === undefined) throw new Error( " Can't access fs module" );
+    var http = require('http');
+    if (fs === undefined) {
+        throw new Error(" Can't access fs module.");
+    }
+    if (http === undefined) {
+        throw new Error(" Can't access http module.");
+    }
 
     var options = {
         host: '127.0.0.1',
@@ -14,11 +18,11 @@ try {
     }
 
     var chunks = "";
-    var callback = function(response) {
-        response.on('data', function (chunk) {
+    var callback = function (response) {
+        response.on('data', function onData(chunk) {
             chunks += chunk;
         });
-        response.on('end', function () {  //Display the data on console
+        response.on('end', function onEnd() {  //Display the data on console
             if( chunks.search("Error") !== -1 ) {
                 console.log(chunks);
             } else {
